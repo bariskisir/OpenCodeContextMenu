@@ -1,23 +1,17 @@
-$cli = (Get-Command opencode-cli -ErrorAction SilentlyContinue).Source
-if (-not $cli) {
-    $cli = "$env:LOCALAPPDATA\OpenCode\opencode-cli.exe"
-    if (-not (Test-Path $cli)) { $cli = $null }
+if (Get-Command opencode-cli -ErrorAction SilentlyContinue) {
+    $cli = "opencode-cli"
+} elseif (Get-Command opencode -ErrorAction SilentlyContinue) {
+    $cli = "opencode"
+} else {
+    Write-Host "OpenCode CLI not found." -ForegroundColor Red; exit 1
 }
-if (-not $cli) {
-    $cli = (Get-Command opencode -ErrorAction SilentlyContinue).Source
-}
-if (-not $cli) {
-    $cli = "$env:LOCALAPPDATA\OpenCode\opencode.exe"
-    if (-not (Test-Path $cli)) { $cli = $null }
-}
-if (-not $cli) { Write-Host "OpenCode CLI not found." -ForegroundColor Red; exit 1 }
 $paths = @(
     "HKCU:\Software\Classes\Directory\shell\OpenInOpenCode"
     "HKCU:\Software\Classes\Directory\Background\shell\OpenInOpenCode"
 )
 foreach ($p in $paths) {
     $commandPath = "$p\command"
-    $desiredCommand = "`"$cli`" `%V`""
+    $desiredCommand = "cmd.exe /k ""cd /d ""%V"" && $cli"""
     $existingCommand = (Get-ItemProperty -Path $commandPath -Name "(Default)" -ErrorAction SilentlyContinue)."(Default)"
     if ($existingCommand -eq $desiredCommand) { continue }
     New-Item -Path $commandPath -Force | Out-Null
